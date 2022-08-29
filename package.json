@@ -1,0 +1,23 @@
+{
+  "name": "karaoke-extencion---copy",
+  "version": "1.0.0",
+  "description": "",
+  "main": "popup.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/darlinf/karaoke-chrome-extencion.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/darlinf/karaoke-chrome-extencion/issues"
+  },
+  "homepage": "https://github.com/darlinf/karaoke-chrome-extencion#readme",
+  "devDependencies": {
+    "eslint": "^8.23.0"
+  }
+}

@@ -1,13 +1,17 @@
 let changeColor = document.getElementById("changeColor");
 
+/* eslint-disable */
 changeColor.addEventListener("click", async () => {
   let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
   chrome.scripting.executeScript({
+    // eslint-disable-line
+
     target: { tabId: tab.id },
     function: setPageBackgroundColor,
   });
 });
+/* eslint-enable */
 
 function setPageBackgroundColor() {
   const soundSVG = `
@@ -18,9 +22,9 @@ function setPageBackgroundColor() {
   <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"></path></svg>
   `;
 
-  const playSVG = `
+  /*const playSVG = `
     <svg height="100%" version="1.1" viewBox="0 0 36 36" width="100%"><path  d="M 12,26 18.5,22 18.5,14 12,10 z M 18.5,22 25,18 25,18 18.5,14 z" id="ytp-id-72"></path></svg>
-  `;
+  `;*/
 
   const popupStyles = /*css*/ `
   .popup:hover{
@@ -165,6 +169,27 @@ function setPageBackgroundColor() {
         </span>`;
   }
 
+  function addPopup(captionsText, suptitle) {
+    //Reset inner html of first container and reset styles
+    captionsText.style = "";
+    captionsText.innerHTML = "";
+    //Add popup and show custom subtitle element
+    suptitle.split(" ").forEach((x, index) => {
+      captionsText.innerHTML += subtitlePopupHTML(x, index);
+    });
+  }
+
+  const pronounceSentenceHTML = /*html*/ `
+      <div class="pronounce-sentence">
+        <div>
+          <button id="recognise-voice">${microphoneSVG}</button>
+          <button id="speak-voice">${soundSVG}</button>
+          <!--<button id="next-music-lyric">{playSVG}</button>-->  
+        </div>
+        <div id="pronounce-resurt"></div>
+      </div>
+  `;
+
   const speak = (
     textToSpeak = "hello",
     pitchV = 0.7,
@@ -180,11 +205,11 @@ function setPageBackgroundColor() {
     if (textToSpeak !== "") {
       const utterThis = new SpeechSynthesisUtterance(textToSpeak);
 
-      utterThis.onend = function (event) {
+      utterThis.onend = function (/*event*/) {
         console.log("SpeechSynthesisUtterance.onend");
       };
 
-      utterThis.onerror = function (event) {
+      utterThis.onerror = function (/*event*/) {
         console.error("SpeechSynthesisUtterance.onerror");
       };
 
@@ -237,25 +262,10 @@ function setPageBackgroundColor() {
         ${popupStyles}
         ${popupContainerStyles}
     </style> 
-    <div class="pronounce-sentence">
-        <div>
-          <button id="recognise-voice">${microphoneSVG}</button>
-          <button id="speak-voice">${soundSVG}</button>
-          <!--<button id="next-music-lyric">{playSVG}</button>-->  
-        </div>
-        <div id="pronounce-resurt"></div>
-    </div>
+      ${pronounceSentenceHTML}
     `;
     //////////////////////////////////////////////////////////////
-    function addPopup(captionsText, suptitle) {
-      //Reset inner html of first container and reset styles
-      captionsText.style = "";
-      captionsText.innerHTML = "";
-      //Add popup and show custom subtitle element
-      suptitle.split(" ").forEach((x, index) => {
-        captionsText.innerHTML += subtitlePopupHTML(x, index);
-      });
-    }
+
     //Get text context from children
     let suptitleOne = suptitleContainer.children[0].textContent;
     let suptitleTwo = suptitleContainer?.children[1]?.textContent;
