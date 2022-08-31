@@ -156,26 +156,24 @@ function setPageBackgroundColor() {
   `;
 
   //Custom html subtitle element
-  function subtitlePopupHTML(subtitleWord, index) {
-    return /*html*/ `
-        <span class="popup" id="myPopupContainer">${subtitleWord}
-          <span class="popuptext " id="myPopup_${index}">
-           <div id="button-word-action_${index}" style="display:flex; background-color: #555; width: fit-content;border-radius: 6px; ">
-            <button id="word-recognise-voice_${index}">${microphoneSVG}</button>
-            <button id="word-speak-voice_${index}">${soundSVG}</button>
-             <p style="align-self: center; margin: 5px;"></p>
-           </div>
-          </span>
-        </span>`;
-  }
 
-  function addPopup(captionsText, suptitle) {
+  function addPopup(captionsText, suptitle, captionsTextId = "") {
     //Reset inner html of first container and reset styles
     captionsText.style = "";
     captionsText.innerHTML = "";
+
     //Add popup and show custom subtitle element
-    suptitle.split(" ").forEach((x, index) => {
-      captionsText.innerHTML += subtitlePopupHTML(x, index);
+    suptitle.split(" ").forEach((subtitleWord, index) => {
+      captionsText.innerHTML += /*html*/ `
+          <span class="popup" id="myPopupContainer">${subtitleWord}
+            <span class="popuptext " id="myPopup_${captionsTextId}${index}">
+             <div id="button-word-action_${captionsTextId}${index}" style="display:flex; background-color: #555; width: fit-content;border-radius: 6px; ">
+              <button id="word-recognise-voice_${captionsTextId}${index}">${microphoneSVG}</button>
+              <button id="word-speak-voice_${captionsTextId}${index}">${soundSVG}</button>
+               <p style="align-self: center; margin: 5px;"></p>
+             </div>
+            </span>
+          </span>`;
     });
   }
 
@@ -254,6 +252,48 @@ function setPageBackgroundColor() {
     });
   }
 
+  function addEventToPopup(arrayElement, suptitleOne, captionsText = "") {
+    //Add event to show popup
+    let index = 0;
+
+    for (const element of arrayElement) {
+      //Prevent popup from closing when clicked
+      getElementByIdAndAddEvent(`myPopup_${captionsText}${index}`, (e) => {
+        e.stopPropagation();
+      });
+
+      //Add styles class when fire event
+      ["click", "touchstart"].forEach((eventName) => {
+        element.addEventListener(eventName, () => {
+          console.log(element);
+          element.childNodes[1].classList.toggle("show");
+          element.classList.toggle("select-color");
+        });
+      });
+
+      //Word pronounce button action
+      let wordToPronounce = suptitleOne.split(" ")[index];
+      getElementByIdAndAddEvent(
+        `word-recognise-voice_${captionsText}${index}`,
+        () => {
+          recogniseVoice((x) => {
+            console.log(x);
+            comparationText(x === suptitleOne);
+          });
+        }
+      );
+
+      getElementByIdAndAddEvent(
+        `word-speak-voice_${captionsText}${index}`,
+        () => {
+          speak(wordToPronounce);
+        }
+      );
+
+      index++;
+    }
+  }
+
   function getTextSuptitle() {
     let suptitleContainer = document.querySelector(".captions-text");
     suptitleContainer.innerHTML += /*html*/ `
@@ -264,7 +304,6 @@ function setPageBackgroundColor() {
     </style> 
       ${pronounceSentenceHTML}
     `;
-    //////////////////////////////////////////////////////////////
 
     //Get text context from children
     let suptitleOne = suptitleContainer.children[0].textContent;
@@ -278,49 +317,24 @@ function setPageBackgroundColor() {
     if (suptitleTwo) {
       let captionsTextSecond =
         document.querySelector(".captions-text").children[1].childNodes[0];
-      addPopup(captionsTextSecond, suptitleTwo);
+      addPopup(captionsTextSecond, suptitleTwo, "second_subtitle");
+      addEventToPopup(
+        captionsTextSecond.children,
+        suptitleTwo,
+        "second_subtitle"
+      );
     }
 
     document.getElementById(
       "pronounce-resurt"
     ).innerHTML = `<p>${suptitleOne}</p><p>${suptitleTwo}</p>`;
 
-    //Add event to show popup
-    let arrayElement = captionsTextFirst.children;
-    let index = 0;
-
-    for (const element of arrayElement) {
-      //Prevent popup from closing when clicked
-      getElementByIdAndAddEvent(`myPopup_${index}`, (e) => {
-        e.stopPropagation();
-      });
-
-      //Add styles class when fire event
-      ["click", "touchstart"].forEach((eventName) => {
-        element.addEventListener(eventName, () => {
-          element.childNodes[1].classList.toggle("show");
-          element.classList.toggle("select-color");
-        });
-      });
-
-      //Word pronounce button action
-      let wordToPronounce = suptitleOne.split(" ")[index];
-      getElementByIdAndAddEvent("word-recognise-voice_" + index, () => {
-        recogniseVoice((x) => {
-          comparationText(x === suptitleOne);
-        });
-      });
-
-      getElementByIdAndAddEvent("word-speak-voice_" + index, () => {
-        speak(wordToPronounce);
-      });
-
-      index++;
-    }
+    addEventToPopup(captionsTextFirst.children, suptitleOne);
 
     //Sentence pronounce button action//document.querySelector(".caption-window").style.width = "fit-content";
     getElementByIdAndAddEvent("recognise-voice", () => {
       recogniseVoice((x) => {
+        console.log(x);
         comparationText(x === suptitleOne);
       });
     });
