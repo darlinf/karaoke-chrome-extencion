@@ -14,6 +14,12 @@ changeColor.addEventListener("click", async () => {
 /* eslint-enable */
 
 function setPageBackgroundColor() {
+  //Get element by id similar to jQuery
+  const $ = (selector) => document.querySelector(selector);
+
+  let suptitleOne = "";
+  let suptitleTwo = "";
+
   const soundSVG = `
    <svg focusable="false" xmlns="http://www.w3.org/2000/svg"  width="30px" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path></svg> 
   `;
@@ -170,7 +176,7 @@ function setPageBackgroundColor() {
              <div id="button-word-action_${captionsTextId}${index}" style="display:flex; background-color: #555; width: fit-content;border-radius: 6px; ">
               <button id="word-recognise-voice_${captionsTextId}${index}">${microphoneSVG}</button>
               <button id="word-speak-voice_${captionsTextId}${index}">${soundSVG}</button>
-               <p style="align-self: center; margin: 5px;"></p>
+               <p style="align-self: center; margin: 5px;" id="word-speak-resurt_${captionsTextId}${index}"></p>
              </div>
             </span>
           </span>`;
@@ -190,6 +196,7 @@ function setPageBackgroundColor() {
 
   const speak = (
     textToSpeak = "hello",
+    speakEnd = () => {},
     pitchV = 0.7,
     rateV = 0.5,
     voice = "Google US English"
@@ -204,6 +211,7 @@ function setPageBackgroundColor() {
       const utterThis = new SpeechSynthesisUtterance(textToSpeak);
 
       utterThis.onend = function (/*event*/) {
+        speakEnd();
         console.log("SpeechSynthesisUtterance.onend");
       };
 
@@ -242,6 +250,10 @@ function setPageBackgroundColor() {
       console.log("Confidence: " + event.results[0][0].confidence);
       voiceResult(event.results[0][0].transcript);
     };
+
+    recognition.onerror = function () {
+      voiceResult("don't recognition");
+    };
   }
 
   function getElementByIdAndAddEvent(elementName, callbackListener) {
@@ -277,6 +289,8 @@ function setPageBackgroundColor() {
         `word-recognise-voice_${captionsText}${index}`,
         () => {
           recogniseVoice((x) => {
+            console.log(`word-speak-resurt_${captionsText}${index}`);
+            $(`#word-speak-resurt_${captionsText}${index}`).innerHTML = x;
             console.log(x);
             comparationText(x === suptitleOne);
           });
@@ -296,6 +310,12 @@ function setPageBackgroundColor() {
 
   function getTextSuptitle() {
     let suptitleContainer = document.querySelector(".captions-text");
+    //Get text context from children
+    suptitleOne = suptitleContainer.children[0].textContent;
+    suptitleTwo = suptitleContainer?.children[1]?.textContent ?? "";
+
+    console.log(suptitleOne);
+
     suptitleContainer.innerHTML += /*html*/ `
     <style> 
         ${sentenceContainerStyles}
@@ -305,16 +325,14 @@ function setPageBackgroundColor() {
       ${pronounceSentenceHTML}
     `;
 
-    //Get text context from children
-    let suptitleOne = suptitleContainer.children[0].textContent;
-    let suptitleTwo = suptitleContainer?.children[1]?.textContent;
-
     //Get child node to add custon suptitle and popup
     let captionsTextFirst =
       document.querySelector(".captions-text").children[0].childNodes[0];
     addPopup(captionsTextFirst, suptitleOne);
+    addEventToPopup(captionsTextFirst.children, suptitleOne);
 
-    if (suptitleTwo) {
+    if (document.querySelectorAll(".caption-visual-line").length === 2) {
+      console.log({ suptitleTwo });
       let captionsTextSecond =
         document.querySelector(".captions-text").children[1].childNodes[0];
       addPopup(captionsTextSecond, suptitleTwo, "second_subtitle");
@@ -325,11 +343,9 @@ function setPageBackgroundColor() {
       );
     }
 
-    document.getElementById(
+    /*document.getElementById(
       "pronounce-resurt"
-    ).innerHTML = `<p>${suptitleOne}</p><p>${suptitleTwo}</p>`;
-
-    addEventToPopup(captionsTextFirst.children, suptitleOne);
+    ).innerHTML = `<p>${suptitleOne}</p><p>${suptitleTwo}</p>`;*/
 
     //Sentence pronounce button action//document.querySelector(".caption-window").style.width = "fit-content";
     getElementByIdAndAddEvent("recognise-voice", () => {
@@ -353,12 +369,25 @@ function setPageBackgroundColor() {
   function searchSubtitles() {
     var intervalId = setInterval(() => {
       elementIfPresent = document.querySelector(".captions-text");
+
       if (elementIfPresent) {
         console.log("is present");
         playPause.click();
-
         clearInterval(intervalId);
         getTextSuptitle();
+
+        speak(suptitleOne + " " + suptitleTwo, () => {
+          recogniseVoice((x) => {
+            $("#pronounce-resurt").innerHTML = `${x}`;
+            setTimeout(() => {
+              playPause.click();
+              elementIfPresent.remove();
+              searchSubtitles();
+            }, 2000);
+          });
+        });
+
+        console.log(1);
       }
     }, 1);
   }
